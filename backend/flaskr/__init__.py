@@ -44,7 +44,8 @@ def create_app(test_config=None):
             'success': True,
             'questions': questions[start:end],
             'totalQuestions': len(questions),
-            'categories': categories
+            'categories': categories,
+            'current_category': [q['category'] for q in questions[start:end]]
         }
 
         return jsonify(res)
@@ -58,7 +59,10 @@ def create_app(test_config=None):
             question.delete()
         except:
             abort(500)
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'question_id': question_id
+        })
 
     @app.route('/questions', methods=['POST'])
     def submit_question():
@@ -94,6 +98,9 @@ def create_app(test_config=None):
 
     @app.route('/categories/<int:category_id>/questions')
     def get_category_questions(category_id):
+        category = Category.query.get(category_id)
+        if category is None:
+            return abort(404)
         questions = [q.format()
                      for q in Question.query.filter_by(category=category_id)]
         res = {
@@ -108,7 +115,10 @@ def create_app(test_config=None):
     def quizzes():
         data = request.get_json()
         previous_questions = data['previous_questions']
-        questions = Question.query.all()
+        category = int(data['quiz_category']['id'])
+        questions = Question.query.filter_by(category=category).all()
+        if not len(questions):
+            return abort(404)
         question_id = random.sample(
             [q.id for q in questions if q.id not in previous_questions], 1)[0]
 

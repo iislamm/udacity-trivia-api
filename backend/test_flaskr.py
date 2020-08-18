@@ -97,7 +97,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertFalse(res_data['success'])
 
-    def test_search_question(self):
+    def test_search_question_valid(self):
         req_data = {'searchTerm': 'a'}
         res = self.client().post('/questions/search', data=json.dumps(req_data),
                                  content_type='application/json')
@@ -105,7 +105,16 @@ class TriviaTestCase(unittest.TestCase):
         res_data = json.loads(res.data)
         self.assertTrue(res_data['success'])
 
-    def test_get_category_questions(self):
+    def test_search_question_invalid(self):
+        req_data = {'sdasdasdasd': 'a'}
+        res = self.client().post('/questions/search', data=json.dumps(req_data),
+                                 content_type='application/json')
+
+        res_data = json.loads(res.data)
+        self.assertFalse(res_data['success'])
+        self.assertEqual(res.status_code, 422)
+
+    def test_get_category_questions_valid(self):
         res = self.client().get('/categories/1/questions')
         res_data = json.loads(res.data)
 
@@ -114,9 +123,17 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertTrue(res_data['success'])
 
+    def test_get_category_questions_invalid(self):
+        res = self.client().get('/categories/12312451324135123123123123/questions')
+        res_data = json.loads(res.data)
+
+        self.assertFalse(res_data['success'])
+        self.assertEqual(res.status_code, 404)
+
     def test_quizzes(self):
         req_data = {
-            'previous_questions': [1]
+            'previous_questions': [1],
+            'quiz_category': {'id': '1'}
         }
 
         res = self.client().post('/quizzes', data=json.dumps(req_data),
